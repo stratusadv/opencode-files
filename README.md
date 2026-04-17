@@ -41,8 +41,10 @@ git init ~/.config/opencode/ && git -C ~/.config/opencode/ remote add origin htt
 
 ## Update Files
 
-Update Files
+Get the latest files from the repo
 
 ```shell
 git -C ~/.config/opencode/ pull origin main
 ```
+
+To update or change the files we suggest using your IDE or GIT Tooling.
