@@ -3,10 +3,46 @@ Our collection of Opencode files that can be shared with anyone around the whole
 
 ## Installation
 
+Install Opencode from your shell with the following command
+
+Terminal User Interface
 ```shell
-git clone https://github.com/stratusadv/opencode-files 
+winget install opencode
 ```
 
-## Setup
+Graphical User Interface
+```shell
+winget install OpenCode
+```
 
-Get your opencode.json config from the company!
+## Upgrade 
+
+Make sure all instances of opencode are closed along with IDE's that use opencode
+
+Terminal User Interface
+```shell
+winget upgrade opencode
+```
+
+Graphical User Interface
+```shell
+winget upgrade OpenCode
+```
+
+## Setup Files
+
+Get your `opencode.json` config and place it in your `~\.config\opencode` directory.
+
+Download Files
+
+```shell
+git init ~/.config/opencode/ && git -C ~/.config/opencode/ remote add origin https://github.com/stratusadv/opencode-files-public && git -C ~/.config/opencode/ fetch && git -C ~/.config/opencode/ reset --hard origin/main
+```
+
+## Update Files
+
+Update Files
+
+```shell
+git -C ~/.config/opencode/ pull origin main
+```
