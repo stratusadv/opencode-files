@@ -4,9 +4,27 @@ from pathlib import Path
 from playwright.sync_api import sync_playwright
 
 try:
-    from .config import BASE_URL, LOGIN_URL, DEFAULT_TIMEOUT, USERNAME, PASSWORD
+    from .config import (
+        BASE_URL,
+        LOGIN_URL,
+        DEFAULT_TIMEOUT,
+        SUPER_USER,
+        SUPER_PASSWORD,
+        TEST_USER,
+        TEST_PASSWORD,
+    )
 except ImportError:
-    from config import BASE_URL, LOGIN_URL, DEFAULT_TIMEOUT, USERNAME, PASSWORD
+    from config import (
+        BASE_URL,
+        LOGIN_URL,
+        DEFAULT_TIMEOUT,
+        SUPER_USER,
+        SUPER_PASSWORD,
+        TEST_USER,
+        TEST_PASSWORD,
+    )
+
+UserType = str | None
 
 
 def start_browser(headless: bool = False):
@@ -28,32 +46,42 @@ def close_browser(browser, p):
     p.stop()
 
 
-def login(page, username: str = None, password: str = None) -> str:
+def login(
+    page, username: str | None = None, password: str | None = None, user_type: UserType = None
+) -> str:
     """Login to the Django application.
 
     Args:
         page: Playwright page instance
-        username: Username (defaults to config)
-        password: Password (defaults to config)
+        username: Username (defaults based on user_type or config)
+        password: Password (defaults based on user_type or config)
+        user_type: "test" for test user, "super" for super user, None for explicit credentials
 
     Returns:
         Current URL after login
     """
-    if username is None:
-        username = USERNAME
-    if password is None:
-        password = PASSWORD
+    if user_type == 'test':
+        username = TEST_USER if username is None else username
+        password = TEST_PASSWORD if password is None else password
+    elif user_type == 'super':
+        username = SUPER_USER if username is None else username
+        password = SUPER_PASSWORD if password is None else password
+    else:
+        if username is None:
+            username = SUPER_USER
+        if password is None:
+            password = SUPER_PASSWORD
 
-    page.goto(f"{BASE_URL}{LOGIN_URL}")
-    page.wait_for_load_state("domcontentloaded")
+    page.goto(f'{BASE_URL}{LOGIN_URL}')
+    page.wait_for_load_state('domcontentloaded')
 
     try:
-        page.locator("#djHideToolBarButton").click()
+        page.locator('#djHideToolBarButton').click()
     except Exception:
         pass
 
-    page.fill("input[name=username]", username)
-    page.fill("input[name=password]", password)
-    page.click("button[type=submit]")
+    page.fill('input[name=username]', username)
+    page.fill('input[name=password]', password)
+    page.click('button[type=submit]')
 
     return page.url

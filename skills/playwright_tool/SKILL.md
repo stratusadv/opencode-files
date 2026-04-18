@@ -5,6 +5,10 @@ description: Browser automation library with reusable functions and test scripts
 
 # Playwright Tool
 
+> **Library Location**: `~/.config/opencode/tools/playwright_tool/`
+> 
+> **Project-Specific Files**: `{project_root}/.opencode/playwright_tool/`
+
 ## Overview
 
 The Playwright Tool provides a browser automation library for testing web applications. It consists of reusable library functions and a structured folder for disposable test scripts.
@@ -19,20 +23,24 @@ The Playwright Tool provides a browser automation library for testing web applic
 
 ### File Structure
 
+**Library** (`~/.config/opencode/tools/playwright_tool/lib/`):
 ```
-.opencode/tools/playwright_tool/
-├── lib/                      # Core library (importable)
-│   ├── __init__.py          # Exports all functions
-│   ├── browser.py           # Browser management
-│   ├── actions.py           # Action functions
-│   ├── utils.py             # Utility functions
-│   └── config.py            # Configuration
-├── scripts/                  # Test scripts (scratchpad)
+lib/
+├── __init__.py          # Exports all functions
+├── browser.py           # Browser management (start, close, login)
+├── actions.py           # Action functions (goto, click, fill, etc.)
+├── utils.py             # Utilities (screenshot, inspect_page, etc.)
+├── permissions.py       # Permission management
+└── config.py            # Configuration
+```
+
+**Project-Specific** (`{project_root}/.opencode/`):
+```
+.opencode/
+├── scripts/playwright/ # Test scripts (scratchpad)
 │   ├── login.py
-│   └── check_company_user_form.py
-├── tests/                    # Test suite
-├── screenshots/              # Screenshot output
-└── README.md                # Usage documentation
+│   └── test_sales_order.py
+└── screenshots/         # Screenshot output
 ```
 
 ### Library Functions
@@ -40,7 +48,7 @@ The Playwright Tool provides a browser automation library for testing web applic
 **Browser Management** (`lib/browser.py`):
 - `start_browser(headless=False)` - Start browser, returns (p, browser, page)
 - `close_browser(browser, p)` - Close browser and stop Playwright
-- `login(page, username, password)` - Login to Django application
+- `login(page, user_type=None)` - Login to Django application (`user_type="test"` or `user_type="super"`)
 
 **Actions** (`lib/actions.py`):
 - `goto(page, url)` - Navigate to URL (relative or absolute)
@@ -60,6 +68,122 @@ The Playwright Tool provides a browser automation library for testing web applic
 - `debug_page_state(page, step_name)` - Debug page state
 - `get_page_html(page, max_length)` - Get page HTML
 - `capture_console_errors(page)` - Set up console error capture
+
+## Permissions Tool
+
+The permissions module (`lib/permissions.py`) manages Django user permissions for testing.
+
+### Cascading Permission Structure
+
+Child apps inherit parent app permissions through `MODEL_PERMISSIONS`. Grant parent app permissions to access all child apps:
+- `company.change_company` cascades to `company_location.change_company`, `company_contact.change_company`, etc.
+
+### Permission Types
+
+1. **UserProfile Boolean Fields** - Custom `can_*` permissions defined on the UserProfile model
+2. **Django Standard Permissions** - Standard `view`, `add`, `change`, `delete` permissions on models
+
+### UserProfile Permissions (`lib/permissions.py`)
+
+```python
+from lib.permissions import (
+    get_user_permissions,    # Get all UserProfile boolean fields
+    get_user_permission,     # Get specific UserProfile field
+    set_user_permission,     # Set a UserProfile boolean field
+    reset_user_permissions,  # Set multiple UserProfile fields
+    list_permission_fields,  # List available UserProfile fields
+    get_test_user_permissions,  # Convenience for test user
+)
+```
+
+### Django Standard Permissions
+
+```python
+from lib.permissions import (
+    get_django_permissions,      # Get all Django permissions for user
+    grant_app_permission,        # Grant single permission (view/add/change/delete)
+    grant_full_app_access,       # Grant full CRUD access to an app
+)
+```
+
+### Usage Examples
+
+**Configure Credentials** (`lib/config.py`):
+```python
+SUPER_USER = "stratus"
+SUPER_PASSWORD = "stratus"
+
+TEST_USER = "test"
+TEST_PASSWORD = "test"
+```
+
+**Login as Test User**:
+```python
+from lib.browser import start_browser, close_browser, login
+
+p, browser, page = start_browser(headless=False)
+try:
+    login(page, user_type="test")  # Uses TEST_USER/TEST_PASSWORD
+finally:
+    close_browser(browser, p)
+```
+
+**Grant Full App Access** (includes all CRUD + cascading to child apps):
+```python
+from lib.permissions import grant_full_app_access, get_django_permissions
+
+# Grant full access to company app
+grant_full_app_access("test", "company")
+# Now has: company.view_company, company.add_company,
+#          company.change_company, company.delete_company
+# Plus cascades to company_location, company_contact, etc.
+
+print(get_django_permissions("test"))
+```
+
+**Grant Single Permission**:
+```python
+from lib.permissions import grant_app_permission
+
+grant_app_permission("test", "view", "company")
+# Adds: company.view_company only
+```
+
+**Check User Permissions**:
+```python
+from lib.permissions import get_django_permissions, get_user_permissions
+
+# Django standard permissions
+print(get_django_permissions("test"))
+# ['add_salespurchaseorder', 'change_salespurchaseorder', ...]
+
+# UserProfile boolean fields
+print(get_user_permissions("test"))
+# {'can_approve_procurement_purchase_orders': True}
+```
+
+**Set UserProfile Permission**:
+```python
+from lib.permissions import set_user_permission
+
+set_user_permission("test", "can_approve_procurement_purchase_orders", True)
+```
+
+### Running Permission Scripts
+
+```bash
+# Run from project root (where manage.py is)
+cd ~/PycharmProjects/van-giessen-growers-portal
+
+# Run test script
+python .config/opencode/tools/playwright_tool/scripts/test_app_permissions.py
+
+# Grant full access via CLI
+python .config/opencode/tools/playwright_tool/scripts/test_app_permissions.py --full company
+
+# Check app access
+python .config/opencode/tools/playwright_tool/scripts/test_app_permissions.py --app /company/ --permission view_company
+```
 
 ## Implementation Guide
 
@@ -83,7 +207,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from lib.browser import start_browser, close_browser, login
@@ -94,10 +218,17 @@ def main():
     p, browser, page = start_browser(headless=False)
     
     try:
+        # Login and let redirect happen naturally
         login(page)
-        goto(page, "/companies/")
+        page.wait_for_timeout(2000)  # Allow redirect to complete
+        
+        # Now inspect the home page or navigate from there
         inspect_page(page)
-        take_screenshot(page, "companies.png")
+        
+        # To click sidebar links, use text selectors
+        # click(page, "text=Sales Orders")
+        
+        take_screenshot(page, "home.png")
     finally:
         close_browser(browser, p)
 
@@ -110,7 +241,7 @@ if __name__ == "__main__":
 Execute scripts directly with Python:
 
 ```bash
-python .opencode/tools/playwright_tool/scripts/login.py
+python .config/opencode/tools/playwright_tool/scripts/login.py
 ```
 
 ### Configuration
@@ -121,20 +252,24 @@ Edit `lib/config.py` to customize settings:
 BASE_URL = "http://localhost:8000"
 LOGIN_URL = "/django_spire/auth/login/"
 DEFAULT_TIMEOUT = 10000
-SCREENSHOT_DIR = ".opencode/tools/playwright_tool/screenshots"
-USERNAME = "stratus"
-PASSWORD = "stratus"
+SCREENSHOT_DIR = ".opencode/screenshots"
+
+SUPER_USER = "stratus"
+SUPER_PASSWORD = "stratus"
+
+TEST_USER = "test"
+TEST_PASSWORD = "test"
 ```
 
 ### Example: Complete Workflow
 
 ```python
-# scripts/check_user_form.py
+# .config/opencode/tools/playwright_tool/scripts/check_user_form.py
 from __future__ import annotations
 import sys
 from pathlib import Path
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(BASE_DIR))
 
 from lib.browser import start_browser, close_browser, login
@@ -145,6 +280,7 @@ from lib.utils import (
     take_screenshot,
     capture_console_errors,
 )
+from lib.permissions import grant_full_app_access, get_django_permissions
 
 def main():
     p, browser, page = start_browser(headless=False)
@@ -179,6 +315,46 @@ if __name__ == "__main__":
     main()
 ```
 
+## Login Redirect Behavior
+
+After login, always let the redirect happen naturally. The login function should:
+1. Submit the login form
+2. Wait for `domcontentloaded` state (not `networkidle`)
+3. Add a small timeout (1-2s) to allow redirects to complete naturally
+
+```python
+def main():
+    p, browser, page = start_browser(headless=False)
+    
+    try:
+        # Login - let redirect happen naturally
+        login(page)
+        page.wait_for_timeout(2000)  # Allow redirect to complete
+        
+        # Now navigate from the home page
+        # DO NOT manually goto() the home page - the redirect handles it
+        
+        inspect_page(page)
+        
+    finally:
+        close_browser(browser, p)
+```
+
+### Why Not Use `networkidle`?
+
+- `networkidle` waits for all network requests to finish, which can timeout on pages with:
+  - Live reload connections (`__reload__`, `__debug__`)
+  - WebSocket connections
+  - Third-party analytics/tracking scripts
+- `domcontentloaded` + timeout is faster and more reliable for SPA navigation
+
+### Navigation from Home Page
+
+After login redirect lands on the home page (`/`), you can navigate using:
+- `inspect_page(page)` to see available navigation links
+- `click(page, "text=Link Text")` to click sidebar links
+- Direct URL navigation via `goto()`
+
 ## Code Review Checklist
 
 When reviewing Playwright scripts, verify the following:
@@ -204,3 +380,4 @@ When reviewing Playwright scripts, verify the following:
 
 - [python-style](../python-style/SKILL.md) - Python coding standards
 - [testing](../testing/SKILL.md) - Django testing best practices
+- [permissions](../permissions/SKILL.md) - Django permission patterns and cascading structure
