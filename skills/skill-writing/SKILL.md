@@ -85,6 +85,28 @@ description: {Action-oriented description}
 - Use H3 for subsections within major sections
 - Never skip heading levels
 
+### Skill File Location
+
+Skills live in one of two locations depending on their scope:
+
+| Location | When to Use |
+|----------|-------------|
+| `{project_root}/.opencode/skills/` | Client-specific conventions, project patterns, custom workflows |
+| `{user_config}/.config/opencode/skills/` | Generic patterns, cross-project best practices, team-wide standards |
+
+**Decision Rule:**
+- If the skill applies to **this project only** → use project root `.opencode/skills/`
+- If the skill applies to **all projects** → use global `.config/opencode/skills/`
+
+**When Uncertain:**
+If you are unsure where a skill should live, use the question tool to ask the user:
+
+```
+Should this skill live in:
+1. Project-specific (.opencode/skills/) - applies only to this project
+2. Global (.config/opencode/skills/) - applies to all projects
+```
+
 ## Content Guidelines
 
 ### Writing Clear Sections
@@ -214,3 +236,4 @@ When reviewing skill files, verify the following:
 7. **Related Skills**: Links to complementary skills are provided
 8. **Realistic Data**: Examples use project-based realistic data
 9. **Actionable Checklists**: Review items are specific and testable
+10. **Skill Location**: Skill is in the correct location (project-specific vs. global)
