@@ -1,6 +1,6 @@
 ---
-name: form-templates
-description: Examples on how we implement our form templates (pages and cards). 
+name: form-views
+description: Examples on how we build our form views. 
 ---
 
 # Guidelines

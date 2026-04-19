@@ -1,5 +1,5 @@
 ---
-name: playwright_tool
+name: playwright-tool
 description: Browser automation library with reusable functions and test scripts
 ---
 

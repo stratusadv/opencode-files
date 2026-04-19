@@ -1,5 +1,5 @@
 ---
-name: ai-intelligence
+name: detail-templates
 description: Best practices for AI bots, prompts, and intel in scope_of_work
 ---
 
