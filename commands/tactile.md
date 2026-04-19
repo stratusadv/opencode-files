@@ -8,7 +8,7 @@ Here is what I need you to do.
 $ARGUMENTS
 
 You can directly edit files. To get it done, create the following todo list to achieve my task:
-1. Load @python_style skill. Write python code to these standards.
+1. Load @python-style skill. Write python code to these standards.
 2. Find relevant skills that are required for this task.
 3. Load the selected skills.
 4. Perform the task.

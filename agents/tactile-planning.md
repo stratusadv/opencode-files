@@ -1,5 +1,4 @@
 ---
-name: tactile-planning
 description: Planning agent - asks questions and creates plans
 permission:
   read: allow

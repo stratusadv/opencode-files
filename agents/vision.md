@@ -1,5 +1,4 @@
 ---
-name: vision
 description: Analyzes images and screenshots for debugging and review
 mode: subagent
 model: stratus/stratus.reasoning

@@ -1,5 +1,4 @@
 ---
-name: self-reflect
 description: Self-reflect on past conversations and agent/command files
 ---
 
