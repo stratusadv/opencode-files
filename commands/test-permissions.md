@@ -1,5 +1,5 @@
 ---
-description: Test app permissions with screenshots and vision analysis
+description: Test app permissions
 agent: tactile
 ---
 
