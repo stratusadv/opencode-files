@@ -6,8 +6,8 @@ description: Browser automation library with reusable functions and test scripts
 # Playwright Tool
 
 > **Library Location**: `~/.config/opencode/tools/playwright_tool/`
-> 
-> **Project-Specific Files**: `{project_root}/.opencode/playwright_tool/`
+>
+> **Project Entry Points**: `{project_root}/.opencode/scripts/grant_perm.py`, `{project_root}/.opencode/scripts/playwright/`
 
 ## Overview
 
@@ -169,20 +169,41 @@ from lib.permissions import set_user_permission
 set_user_permission("test", "can_approve_procurement_purchase_orders", True)
 ```
 
-### Running Permission Scripts
+### Running Permission Scripts (CLI)
+
+Run from project root (where `manage.py` is). Uses `Path.home()` to dynamically locate the tool:
 
 ```bash
-# Run from project root (where manage.py is)
-cd ~/PycharmProjects/van-giessen-growers-portal
+# Grant view permission to an app
+python .opencode/scripts/grant_perm.py grant -u test -a asset --action view
 
-# Run test script
-python .config/opencode/tools/playwright_tool/scripts/test_app_permissions.py
+# Grant full CRUD access to an app
+python .opencode/scripts/grant_perm.py full -u test -a company
 
-# Grant full access via CLI
-python .config/opencode/tools/playwright_tool/scripts/test_app_permissions.py --full company
+# List user's permissions
+python .opencode/scripts/grant_perm.py list -u test
 
-# Check app access
-python .config/opencode/tools/playwright_tool/scripts/test_app_permissions.py --app /company/ --permission view_company
+# Filter by app
+python .opencode/scripts/grant_perm.py list -u test --app asset
+
+# Check specific permission
+python .opencode/scripts/grant_perm.py check -u test -p view_asset
+
+# List available UserProfile permission fields
+python .opencode/scripts/grant_perm.py fields
+
+# Set UserProfile boolean permission
+python .opencode/scripts/grant_perm.py set -u test --perm can_approve -v True
+```
+
+### Running Playwright Scripts
+
+```bash
+# Run a playwright script from project root
+python .opencode/scripts/playwright/__main__.py login.py
+
+# Run another script
+python .opencode/scripts/playwright/__main__.py check_sidebar.py
 ```
 
 ## Implementation Guide
