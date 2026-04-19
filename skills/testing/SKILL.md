@@ -202,6 +202,51 @@ class {ModelName}TestCase(BaseTestCase):
 - Return value existence unless it's the logic
 - Standard CRUD operations
 
+### View Integration Tests
+
+For view/page tests, use high-level integration tests that check response status codes. Keep tests simple and resilient to template changes.
+
+**Rules:**
+- Use `reverse()` instead of hardcoded URLs
+- Test for 200 status codes, not rendered content
+- One test class with separate methods per endpoint
+- Only create test data when the endpoint requires it
+
+```python
+# app/location/tests/test_views/test_page_views.py
+from __future__ import annotations
+
+from django.urls import reverse
+
+from django_spire.core.tests.test_cases import BaseTestCase
+
+from app.location.tests.factories import create_location
+
+
+class LocationPageViewTestCase(BaseTestCase):
+    def setUp(self) -> None:
+        super().setUp()
+
+    def test_dashboard_returns_200(self):
+        response = self.client.get(reverse('location:page:dashboard'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_list_returns_200(self):
+        response = self.client.get(reverse('location:page:list'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_detail_returns_200(self):
+        location = create_location()
+        response = self.client.get(reverse('location:page:detail', kwargs={'pk': location.pk}))
+        self.assertEqual(response.status_code, 200)
+```
+
+**Why keep view tests simple:**
+- Template changes will break detailed content assertions
+- View logic is minimal; business logic lives in services
+- Integration tests catch real problems (500s, broken templates)
+- Detailed testing belongs in service/model test suites
+
 ## Examples
 
 ### Example 1: Factory Service Test
@@ -353,9 +398,10 @@ When reviewing test files, verify the following:
 12. **Service Testing**: Service tests verify business logic outcomes, not that methods "returned something"
 13. **Type Hints**: Factory functions use proper type hints with `from __future__ import annotations` and `TYPE_CHECKING` guards
 14. **Sensible Defaults**: Factories set sensible defaults that can be overridden via `**kwargs`
+15. **View Tests Use reverse()**: View tests use `reverse()` instead of hardcoded URLs
+16. **View Tests Check Status Codes**: View tests check for 200 status codes, not rendered content
 
 ## Related Skills
 
-- [testing](../testing/SKILL.md) - Original testing skill
 - [service-layer](../service-layer/SKILL.md) - Service layer patterns for testing
 - [python-style](../python_style/SKILL.md) - Coding standards
