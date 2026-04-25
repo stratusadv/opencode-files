@@ -200,7 +200,64 @@ urlpatterns += [
 ]
 ```
 
-### Step 5: Reverse URL Names
+### Step 5: Wire Up Sub-Module URLs in Parent App
+
+If your app contains sub-modules (e.g., `location/field/`, `location/bin/`), you must register the sub-module URLs in the parent app's `urls/__init__.py`:
+
+```python
+# app/location/urls/__init__.py
+from __future__ import annotations
+
+from django.urls.conf import include, path
+
+
+app_name = 'location'
+
+urlpatterns = [
+    path('page/', include('app.location.urls.page_urls', namespace='page')),
+    path('form/', include('app.location.urls.form_urls', namespace='form')),
+    path('field/', include('app.location.field.urls', namespace='field')),
+    path('bin/', include('app.location.bin.urls', namespace='bin')),
+    path('warehouse/', include('app.location.warehouse.urls', namespace='warehouse')),
+    path('template/', include('app.location.urls.template_urls', namespace='template')),
+    path('json/', include('app.location.urls.json_urls', namespace='json')),
+]
+```
+
+**Important:** Verify sub-module URLs are registered before using them in templates. Unregistered namespaces will result in empty string when using `{% url %}` in templates.
+
+### Step 6: Verify URL Exists Before Wiring to Templates
+
+Before wiring a URL to a button or template, verify it exists:
+
+**DON'T:**
+```html
+<!-- ❌ DON'T: Assume URL exists without verification -->
+{% url 'location:field:form:create' as field_create_url %}
+{% include 'django_spire/button/secondary_outlined_button.html' with button_icon='bi bi-plus-lg' button_href=field_create_url %}
+```
+
+**DO:**
+```python
+# ✅ DO: First verify the URL resolves correctly
+# In Django shell or test:
+>>> from django.urls import reverse
+>>> reverse('location:field:form:create')
+'/location/field/form/create/'
+
+# If it raises NoReverseMatch, the URL isn't registered - check:
+# 1. Parent app's urls/__init__.py includes the sub-module URLs
+# 2. Sub-module's urls/__init__.py defines app_name correctly
+# 3. URL name matches the namespace:app_name:view_name pattern
+```
+
+```html
+<!-- ✅ DO: Only add URL to template after verification -->
+{% url 'location:field:form:create' as field_create_url %}
+{% include 'django_spire/button/secondary_outlined_button.html' with button_icon='bi bi-plus-lg' button_href=field_create_url %}
+```
+
+### Step 7: Reverse URL Names
 
 ```python
 from django.urls import reverse
@@ -212,7 +269,7 @@ url_name = 'company:your_app:page:list'
 url = reverse(url_name, kwargs={'company_slug': company.uuid})
 ```
 
-### Step 6: Create Nested URL Structures
+### Step 8: Create Nested URL Structures
 
 For deeper nesting (e.g., `catalog/page/entry/`):
 
@@ -248,6 +305,46 @@ urlpatterns = [
 ```
 
 ## Examples
+
+### DON'T: Missing Sub-Module URL Registration
+
+```python
+# ❌ DON'T: Sub-module URLs not registered in parent app
+# app/location/urls/__init__.py
+urlpatterns = [
+    path('page/', include('app.location.urls.page_urls', namespace='page')),
+    path('form/', include('app.location.urls.form_urls', namespace='form')),
+    # Missing: field, bin, warehouse sub-modules not included!
+]
+```
+
+```html
+<!-- This will render href="" because the namespace doesn't exist -->
+{% url 'location:field:form:create' as field_create_url %}
+<a href="{{ field_create_url }}">Add Field</a>
+<!-- Renders as: <a href="">Add Field</a> -->
+```
+
+### DO: Sub-Module URLs Registered in Parent App
+
+```python
+# ✅ DO: All sub-module URLs properly registered
+# app/location/urls/__init__.py
+urlpatterns = [
+    path('page/', include('app.location.urls.page_urls', namespace='page')),
+    path('form/', include('app.location.urls.form_urls', namespace='form')),
+    path('field/', include('app.location.field.urls', namespace='field')),
+    path('bin/', include('app.location.bin.urls', namespace='bin')),
+    path('warehouse/', include('app.location.warehouse.urls', namespace='warehouse')),
+]
+```
+
+```html
+<!-- Now this renders the correct href -->
+{% url 'location:field:form:create' as field_create_url %}
+{% include 'django_spire/button/secondary_outlined_button.html' with button_href=field_create_url %}
+<!-- Renders as: <a href="/location/field/form/create/"> -->
+```
 
 ### DON'T: Flat URL Structure
 
@@ -381,3 +478,4 @@ When reviewing URL configuration code, verify the following:
 15. **Single Quotes**: All string literals use single quotes per python-style guidelines
 16. **TYPE_CHECKING Guards**: Use import guards when circular imports are possible
 17. **On-Demand Namespaces**: Only create URL type namespaces when corresponding views exist
+18. **URL Registration**: When wiring URLs to templates/buttons, verify the URL exists in the parent app's URL config before use

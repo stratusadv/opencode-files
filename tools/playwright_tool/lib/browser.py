@@ -72,14 +72,7 @@ def login(
         if password is None:
             password = SUPER_PASSWORD
 
-    page.goto(f'{BASE_URL}{LOGIN_URL}')
-    page.wait_for_load_state('domcontentloaded')
-
-    try:
-        page.locator('#djHideToolBarButton').click()
-    except Exception:
-        pass
-
+    page.goto(f'{BASE_URL}{LOGIN_URL}', wait_until='commit')
     page.fill('input[name=username]', username)
     page.fill('input[name=password]', password)
     page.click('button[type=submit]')

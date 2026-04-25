@@ -1,7 +1,7 @@
 ---
 description: Analyzes images and screenshots for debugging and review
 mode: subagent
-model: stratus/stratus.reasoning
+model: stratus/stratus.turbo
 permission:
   webfetch: allow
 ---

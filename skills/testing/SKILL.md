@@ -68,6 +68,28 @@ class MyModelTestCase(BaseTestCase):
 - Logged-in superuser (`self.super_user`)
 - Temporary MEDIA_ROOT for file uploads
 
+### Factory Naming Conventions
+
+**All factory functions MUST use the `create_test_` prefix.** This distinguishes test data factories from production code.
+
+**Correct:**
+```python
+def create_test_company(**kwargs) -> Company:
+    ...
+def create_test_location(**kwargs) -> Location:
+    ...
+```
+
+**Incorrect:**
+```python
+def create_location(**kwargs) -> Location:  # Missing create_test_ prefix
+    ...
+def create_company(**kwargs) -> Company:  # Missing create_test_ prefix
+    ...
+```
+
+When importing factories from other apps, always verify the exact function name in the source file before using it.
+
 ### Hybrid Factory Pattern with **kwargs
 
 Factories belong to the app that owns the model. Use optional FK parameters with auto-creation plus `**kwargs` for flexible field overrides:
@@ -220,7 +242,7 @@ from django.urls import reverse
 
 from django_spire.core.tests.test_cases import BaseTestCase
 
-from app.location.tests.factories import create_location
+from app.location.tests.factories import create_test_location
 
 
 class LocationPageViewTestCase(BaseTestCase):
@@ -236,7 +258,7 @@ class LocationPageViewTestCase(BaseTestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_detail_returns_200(self):
-        location = create_location()
+        location = create_test_location()
         response = self.client.get(reverse('location:page:detail', kwargs={'pk': location.pk}))
         self.assertEqual(response.status_code, 200)
 ```
@@ -389,17 +411,18 @@ When reviewing test files, verify the following:
 3. **Business Logic Focus**: Tests verify business outcomes, not framework basics (ORM saves, attribute assignment)
 4. **Test Isolation**: Tests are independent and don't rely on execution order or shared state
 5. **Naming Conventions**: Test classes use `{ModuleName}TestCase`, methods use `test_{action}`
-6. **Hybrid Factory Pattern**: Factory functions use optional FK parameters with auto-creation plus `**kwargs` for flexible field overrides
-7. **File Cleanup**: Tests clean up any created files in teardown or at end of test
-8. **Assertion Quality**: Assertions check meaningful outcomes, not just "not None" or equality to inputs
-9. **Realistic Data**: Factories use realistic project-based data, not generic placeholders
-10. **User Creation**: Tests use `create_super_user()` for main test user, `create_user()` for additional users
-11. **No Inline Creation**: Complex object creation uses factories, not inline `objects.create()` calls
-12. **Service Testing**: Service tests verify business logic outcomes, not that methods "returned something"
-13. **Type Hints**: Factory functions use proper type hints with `from __future__ import annotations` and `TYPE_CHECKING` guards
-14. **Sensible Defaults**: Factories set sensible defaults that can be overridden via `**kwargs`
-15. **View Tests Use reverse()**: View tests use `reverse()` instead of hardcoded URLs
-16. **View Tests Check Status Codes**: View tests check for 200 status codes, not rendered content
+6. **Factory Naming**: All factory functions use the `create_test_` prefix (e.g., `create_test_location`)
+7. **Hybrid Factory Pattern**: Factory functions use optional FK parameters with auto-creation plus `**kwargs` for flexible field overrides
+8. **File Cleanup**: Tests clean up any created files in teardown or at end of test
+9. **Assertion Quality**: Assertions check meaningful outcomes, not just "not None" or equality to inputs
+10. **Realistic Data**: Factories use realistic project-based data, not generic placeholders
+11. **User Creation**: Tests use `create_super_user()` for main test user, `create_user()` for additional users
+12. **No Inline Creation**: Complex object creation uses factories, not inline `objects.create()` calls
+13. **Service Testing**: Service tests verify business logic outcomes, not that methods "returned something"
+14. **Type Hints**: Factory functions use proper type hints with `from __future__ import annotations` and `TYPE_CHECKING` guards
+15. **Sensible Defaults**: Factories set sensible defaults that can be overridden via `**kwargs`
+16. **View Tests Use reverse()**: View tests use `reverse()` instead of hardcoded URLs
+17. **View Tests Check Status Codes**: View tests check for 200 status codes, not rendered content
 
 ## Related Skills
 
